@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PlanBuddy – Make Plans Together</title>
+<style>
+:root{color-scheme:dark;--bg:#0B1020;--card:#151D33;--pr:#8B5CF6;--bl:#3B82F6;--lp:#A78BFA;--tx:#F8FAFC;--mu:#94A3B8;--ok:#22C55E;--wa:#F59E0B;--er:#EF4444;--ln:#252f4d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--bl);text-decoration:none}h1,h2,h3{margin:0 0 .5rem;line-height:1.2}p{margin:.3rem 0}
+:focus-visible{outline:2px solid var(--lp);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:14px}
+.btn{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;transition:.15s;display:inline-block}
+.btn:hover{background:var(--lp)}.btn.s{background:transparent;border:1px solid var(--bl);color:var(--bl)}.btn.d{background:var(--er)}.btn.g{background:#222c4a}.btn.sm{padding:4px 10px;font-size:13px}
+input,select,textarea{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:9px 12px;font:inherit;margin-top:4px}
+label{display:block;margin-bottom:10px;color:var(--mu);font-size:13px}label.ck{display:flex;gap:8px;align-items:center;color:var(--tx);font-size:14px}label.ck input{width:auto;margin:0}
+.er{color:var(--er);display:block;min-height:0}
+.mu{color:var(--mu)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.bd{background:#2a2250;color:var(--lp);border-radius:99px;padding:2px 9px;font-size:12px;font-weight:600;display:inline-block}
+.bd.Confirmed,.bd.Completed{background:#12351f;color:var(--ok)}.bd.Planning{background:#3a2a0a;color:var(--wa)}.bd.Cancelled{background:#3a1515;color:var(--er)}
+.tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--ln);margin-bottom:14px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--mu);padding:8px 12px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button.on{color:var(--tx);border-color:var(--pr)}
+.sh{display:flex;min-height:100vh}.sb{width:220px;background:var(--card);padding:16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.lg{font-size:20px;font-weight:800;color:var(--tx);margin-bottom:14px}.lg b{color:var(--lp)}
+.nl{color:var(--mu);padding:9px 12px;border-radius:10px}.nl.on,.nl:hover{background:#222c4a;color:var(--tx)}
+main{flex:1;padding:22px;max-width:1000px;min-width:0}
+.pub{max-width:1000px;margin:0 auto;padding:16px}
+.hero{text-align:center;padding:50px 0}.hero h1{font-size:clamp(2rem,6vw,3.4rem)}.hero h1 span{background:linear-gradient(90deg,var(--pr),var(--bl));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bar{height:8px;background:var(--bg);border-radius:9px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--pr)}
+.opt{width:100%;text-align:left;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:10px;margin-bottom:8px;font:inherit;cursor:pointer}.opt.on{border-color:var(--pr)}.opt:disabled{cursor:default;opacity:.85}
+.done{text-decoration:line-through;color:var(--mu)}.unr{border-left:3px solid var(--pr)}
+#modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:16px;z-index:9}#modal.on{display:flex}#modal .card{width:100%;max-width:440px;max-height:90vh;overflow:auto;margin:0}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#04210f;padding:8px 16px;border-radius:99px;font-weight:600;display:none;z-index:10}
+.cen{max-width:380px;margin:60px auto}
+@media(max-width:800px){.sh{flex-direction:column}.sb{width:100%;height:auto;position:sticky;flex-direction:row;overflow-x:auto;align-items:center;z-index:5;padding:10px}.lg{margin:0 8px 0 0}.nl{white-space:nowrap}main{padding:14px}}
+</style></head><body>
+<div id="app"></div><div id="modal"></div><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const U={u0:"You",u1:"Aarav",u2:"Riya",u3:"Kabir"},CATS=["Trip","Outing","Party","Dinner","Movie","Birthday","College Event","Other"],STS=["Planning","Confirmed","Completed","Cancelled"];
+const inr=p=>"₹"+(p/100).toLocaleString("en-IN",{maximumFractionDigits:2}),uid=()=>Math.random().toString(36).slice(2,8);
+const K="pb-demo-1";let S,R="home",T="overview",L={step:"phone"};
+function seed(){return{auth:false,me:{name:"Demo User",phone:""},groups:[{id:"g1",name:"Goa Gang",desc:"Beach trip crew",code:"GOA2026",members:["u0","u1","u2","u3"],owner:"u0"}],
+pool:[{id:"g9",name:"Weekend Cricket",desc:"Sunday matches",code:"CRIC2026",members:["u1","u2"],owner:"u1"}],
+plans:[{id:"p1",gid:"g1",title:"Goa Trip",cat:"Trip",desc:"3 days of sun and sea.",date:"2026-12-20",time:"09:00",loc:"Goa",status:"Planning",by:"u0",
+polls:[{id:"q1",q:"Where should we stay?",closed:false,opts:[{t:"Beach hut",v:["u1","u2"]},{t:"City hotel",v:["u3"]}]}],
+todo:[{id:"t1",t:"Book train tickets",done:true,as:"u1",by:"u0"},{id:"t2",t:"Pack sunscreen",done:false,as:"u2",by:"u0"}],
+exp:[{id:"e1",t:"Hotel",amt:400000,paid:"u0",parts:["u0","u1","u2","u3"]},{id:"e2",t:"Food",amt:200000,paid:"u1",parts:["u0","u1","u2","u3"]},{id:"e3",t:"Transport",amt:200000,paid:"u2",parts:["u0","u1","u2","u3"]}]}],
+acts:[{t:"Aarav created the poll “Where should we stay?”",g:"g1"}],notifs:[{id:"n1",t:"Riya voted in “Where should we stay?”",read:false},{id:"n2",t:"Aarav added “Book train tickets”",read:false}]}}
+function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){}if(!S)S=seed()}
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+const unread=()=>S.notifs.filter(n=>!n.read).length,grp=id=>S.groups.find(g=>g.id==id),pl=id=>S.plans.find(p=>p.id==id);
+function log(t,g){S.acts.unshift({t,g});S.notifs.unshift({id:uid(),t,read:false});save()}
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",2200)}
+function modal(h){const m=$("#modal");m.innerHTML=h?`<div class=card role=dialog aria-modal=true>${h}</div>`:"";m.classList.toggle("on",!!h)}
+const fld=(l,n,a="",tag="input")=>`<label>${l}${tag=="textarea"?`<textarea name=${n} ${a}></textarea>`:`<input name=${n} ${a}>`}<small class=er data-e=${n}></small></label>`;
+const empty=(t,b="")=>`<div class="card mu" style="text-align:center">${t}<div style="margin-top:10px">${b}</div></div>`;
+const dt=(d,t)=>d?new Date(d+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(t?" · "+t:""):"Date TBD";
+
+function balances(p){const b={};p.exp.forEach(e=>{const n=e.parts.length||1,sh=Math.floor(e.amt/n),rem=e.amt-sh*n;b[e.paid]=(b[e.paid]||0)+e.amt;e.parts.forEach((u,i)=>b[u]=(b[u]||0)-(sh+(i<rem?1:0)))});return b}
+
+function shell(c){const nav=[["app","Dashboard"],["groups","Groups"],["notifications","Notifications"],["profile","Profile"],["settings","Settings"]];
+return`<div class=sh><nav class=sb aria-label=Main><a class=lg href="#app">Plan<b>Buddy</b></a>${nav.map(([r,l])=>`<a class="nl ${R==r||(r=="groups"&&/^group/.test(R))?"on":""}" href="#${r}">${l}${r=="notifications"&&unread()?` <span class=bd>${unread()}</span>`:""}</a>`).join("")}</nav><main>${c}</main></div>`}
+const pub=c=>`<div class=pub><div class="row sp"><a class=lg href="#home">Plan<b>Buddy</b></a><div class=row><a href="#login" class="btn s">Log in</a><a href="#login" class=btn>Get Started</a></div></div>${c}<footer class="mu row sp" style="margin-top:40px;border-top:1px solid var(--ln);padding-top:14px"><span>© 2026 PlanBuddy</span><span><a href="#privacy">Privacy Policy</a> · <a href="#terms">Terms</a></span></footer></div>`;
+
+const pages={
+home:()=>pub(`<section class=hero><h1>Make Plans <span>Together</span></h1><p class=mu style="max-width:560px;margin:10px auto 20px">One place for private groups, plans, polls, checklists and shared expenses — so your group stops living in ten different chats.</p><a href="#login" class=btn>Sign Up / Get Started</a></section>
+<div class=grid>${[["👥","Private groups","Invite friends with a code or link."],["📅","Plans","Trips, dinners, parties and more."],["🗳️","Polls","Decide dates and places together."],["✅","Checklists","Assign and track tasks."],["💸","Expenses","Record who paid and see balances."]].map(([i,t,d])=>`<div class=card><h3>${i} ${t}</h3><p class=mu>${d}</p></div>`).join("")}</div>`),
+privacy:()=>pub(`<div class=card><h2>Privacy Policy</h2><p class=mu>Placeholder text — final legal content to be supplied by the product owner.</p></div>`),
+terms:()=>pub(`<div class=card><h2>Terms of Service</h2><p class=mu>Placeholder text — final legal content to be supplied by the product owner.</p></div>`),
+login:()=>pub(`<div class="card cen">${L.step=="phone"?`<h2>Log in</h2><form data-f=phone>${fld("Phone number","phone",'type=tel placeholder="10-digit mobile number"')}<button class=btn style="width:100%">Send OTP</button></form><p class="mu" style="text-align:center">or</p><button class="btn s" style="width:100%" data-a=google>Continue with Google</button>`:`<h2>Enter OTP</h2><p class=mu>Sent to ${esc(L.phone)}. Demo code: 123456</p><form data-f=otp>${fld("6-digit OTP","otp",'inputmode=numeric maxlength=6')}<button class=btn style="width:100%">Verify</button></form><div class="row sp" style="margin-top:10px"><button class="btn g sm" data-a=resend>Resend OTP</button><button class="btn g sm" data-a=back>Change number</button></div>`}</div>`),
+app:()=>{const ps=S.plans.filter(p=>grp(p.gid)).sort((a,b)=>a.date>b.date?1:-1);return shell(`<div class="row sp"><h1>Hi, ${esc(S.me.name.split(" ")[0])} 👋</h1><div class=row><button class="btn s" data-a=m-group>New Group</button><a class=btn href="#newplan">New Plan</a></div></div>
+<h2>Upcoming plans</h2>${ps.length?`<div class=grid>${ps.map(planCard).join("")}</div>`:empty("No plans yet.",`<a class=btn href="#newplan">Create a plan</a>`)}
+<h2>My groups</h2>${S.groups.length?`<div class=grid>${S.groups.map(groupCard).join("")}</div>`:empty("You’re not in any group yet.",`<button class=btn data-a=m-group>Create a group</button>`)}
+<h2>Recent activity</h2><div class=card>${S.acts.slice(0,6).map(a=>`<p>• ${esc(a.t)}</p>`).join("")||`<span class=mu>No activity yet.</span>`}</div>`)},
+groups:()=>shell(`<div class="row sp"><h1>Groups</h1><div class=row><button class="btn s" data-a=m-join>Join by code</button><button class=btn data-a=m-group>New Group</button></div></div>${S.groups.length?`<div class=grid>${S.groups.map(groupCard).join("")}</div>`:empty("No groups yet.")}`),
+notifications:()=>shell(`<div class="row sp"><h1>Notifications</h1><button class="btn g sm" data-a=readall>Mark all read</button></div>${S.notifs.map(n=>`<div class="card ${n.read?"":"unr"}" ${n.read?"":`data-a=read data-id=${n.id}`} style="cursor:pointer">${esc(n.t)}</div>`).join("")||empty("You’re all caught up.")}`),
+profile:()=>shell(`<h1>Profile</h1><div class=card><form data-f=profile>${fld("Name","name",`value="${esc(S.me.name)}"`)}<p class=mu>Phone: ${esc(S.me.phone||"—")}</p><button class=btn>Save</button></form></div>`),
+settings:()=>shell(`<h1>Settings</h1><div class=card><button class="btn g" data-a=logout>Log out</button></div><div class=card><h3>Delete account</h3><p class=mu>Permanently removes your profile and group memberships. This cannot be undone.</p><button class="btn d" data-a=m-delacct>Delete account…</button></div>`),
+newplan:g=>shell(`<h1>Create plan</h1><div class=card><form data-f=plan><label>Group<select name=gid>${S.groups.map(x=>`<option value=${x.id} ${x.id==g?"selected":""}>${esc(x.name)}</option>`).join("")}</select><small class=er data-e=gid></small></label>${fld("Title","title")}<label>Category<select name=cat>${CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>${fld("Description","desc","","textarea")}<div class=row><div style="flex:1">${fld("Date","date","type=date")}</div><div style="flex:1">${fld("Time","time","type=time")}</div></div>${fld("Location","loc")}<button class=btn>Create plan</button></form></div>`)};
+
+function groupCard(g){return`<a class=card href="#group-${g.id}" style="display:block;color:inherit"><h3>${esc(g.name)}</h3><p class=mu>${esc(g.desc)}</p><span class=bd>${g.members.length} members</span></a>`}
+function planCard(p){return`<a class=card href="#plan-${p.id}" style="display:block;color:inherit"><span class="bd ${p.status}">${p.status}</span><h3 style="margin-top:6px">${esc(p.title)}</h3><p class=mu>${dt(p.date,p.time)}<br>${esc(grp(p.gid)?.name||"")} · ${esc(p.loc||"No location")}</p></a>`}
+
+function groupPage(id){const g=grp(id);if(!g)return shell(empty("Group not found or you don’t have access.",`<a class=btn href="#groups">Back</a>`));const adm=g.owner=="u0";
+const tabs=["overview","members","plans","activity"],ps=S.plans.filter(p=>p.gid==id);
+let b="";if(T=="overview")b=`<div class=card><p>${esc(g.desc)}</p><p class=mu>Invite code: <b>${g.code}</b></p><button class="btn s sm" data-a=copy data-id=${g.code}>Copy invite link</button></div>`;
+if(T=="members")b=g.members.map(u=>`<div class="card row sp"><span>${U[u]} ${u==g.owner?`<span class=bd>Owner</span>`:""}</span>${adm&&u!="u0"?`<button class="btn d sm" data-a=rmmem data-id=${u} data-g=${id}>Remove</button>`:""}</div>`).join("");
+if(T=="plans")b=(ps.length?`<div class=grid>${ps.map(planCard).join("")}</div>`:empty("No plans in this group."))+`<a class=btn href="#newplan-${id}">Create plan</a>`;
+if(T=="activity")b=S.acts.filter(a=>a.g==id).map(a=>`<div class=card>${esc(a.t)}</div>`).join("")||empty("No activity yet.");
+return shell(`<div class="row sp"><h1>${esc(g.name)}</h1>${adm?"":`<button class="btn d sm" data-a=m-leave data-id=${id}>Leave</button>`}</div>${tabsBar(tabs)}${b}`)}
+const tabsBar=ts=>`<div class=tabs role=tablist>${ts.map(t=>`<button role=tab class="${T==t?"on":""}" data-a=tab data-id=${t}>${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div>`;
+
+function planPage(id){const p=pl(id);if(!p)return shell(empty("Plan not found.",`<a class=btn href="#app">Back</a>`));const g=grp(p.gid)||{members:[],owner:""},can=p.by=="u0"||g.owner=="u0",bal=balances(p),tot=p.exp.reduce((s,e)=>s+e.amt,0);let b="";
+if(T=="overview")b=`<div class=card><p>${esc(p.desc||"No description.")}</p><p class=mu>📅 ${dt(p.date,p.time)}<br>📍 ${esc(p.loc||"—")}<br>Created by ${U[p.by]}</p>${can?`<label style="max-width:220px;margin-top:10px">Status<select data-a=status>${STS.map(s=>`<option ${s==p.status?"selected":""}>${s}</option>`).join("")}</select></label>`:""}</div><div class=card><h3>Participants</h3>${g.members.map(u=>`<span class=bd style="margin:2px">${U[u]}</span>`).join(" ")}</div>`;
+if(T=="polls")b=`<button class="btn s sm" data-a=m-poll style="margin-bottom:12px">New poll</button>`+(p.polls.map(q=>{const n=q.opts.reduce((s,o)=>s+o.v.length,0),mx=Math.max(...q.opts.map(o=>o.v.length));return`<div class=card><div class="row sp"><h3>${esc(q.q)}</h3>${q.closed?`<span class=bd>Closed</span>`:""}</div>${q.opts.map((o,i)=>`<button class="opt ${o.v.includes("u0")?"on":""}" ${q.closed?"disabled":""} data-a=vote data-id=${q.id} data-i=${i}><div class="row sp"><span>${o.v.includes("u0")?"✓ ":""}${esc(o.t)}${q.closed&&mx&&o.v.length==mx?" 🏆":""}</span><span class=mu>${o.v.length} vote${o.v.length==1?"":"s"}</span></div><div class=bar><i style="width:${n?o.v.length/n*100:0}%"></i></div></button>`).join("")}${!q.closed&&can?`<button class="btn g sm" data-a=closepoll data-id=${q.id}>Close poll</button>`:""}</div>`}).join("")||empty("No polls yet."));
+if(T=="checklist")b=`<form data-f=todo class="card row"><input name=t placeholder="Add a task" style="flex:2;margin:0"><select name=as style="flex:1;margin:0"><option value="">Unassigned</option>${g.members.map(u=>`<option value=${u}>${U[u]}</option>`).join("")}</select><button class=btn>Add</button></form>`+(p.todo.map(t=>`<div class="card row sp"><label class=ck style="margin:0"><input type=checkbox ${t.done?"checked":""} data-a=toggle data-id=${t.id}><span class="${t.done?"done":""}">${esc(t.t)}</span></label><span class=row><small class=mu>${t.as?"→ "+U[t.as]:""} ${t.done?"✓ by "+U[t.doneBy||t.as||"u0"]:"added by "+U[t.by]}</small><button class="btn d sm" data-a=deltodo data-id=${t.id} aria-label=Delete>✕</button></span></div>`).join("")||empty("No tasks yet."));
+if(T=="expenses")b=`<div class="card row sp"><div><span class=mu>Total spending</span><h2 style="margin:0">${inr(tot)}</h2></div><button class=btn data-a=m-exp>Add expense</button></div>`+(p.exp.map(e=>`<div class="card row sp"><span>${esc(e.t)}<br><small class=mu>Paid by ${U[e.paid]} · ${e.parts.length} people</small></span><span class=row><b>${inr(e.amt)}</b><button class="btn d sm" data-a=delexp data-id=${e.id} aria-label=Delete>✕</button></span></div>`).join("")||empty("No expenses yet."))+(p.exp.length?`<div class=card><h3>Balances</h3>${g.members.map(u=>{const v=bal[u]||0;return`<p class="row sp"><span>${U[u]}</span><span style="color:${v>0?"var(--ok)":v<0?"var(--wa)":"var(--mu)"}">${v>0?"gets back "+inr(v):v<0?"owes "+inr(-v):"settled"}</span></p>`}).join("")}<small class=mu>Demo computes balances locally; the real app must show backend-calculated values.</small></div>`:"");
+return shell(`<div class="row sp"><div><span class="bd ${p.status}">${p.status}</span> <span class=bd>${p.cat}</span><h1 style="margin-top:6px">${esc(p.title)}</h1></div>${can?`<button class="btn d sm" data-a=m-delplan>Delete</button>`:""}</div>${tabsBar(["overview","polls","checklist","expenses"])}${b}`)}
+
+function render(){const h=location.hash.slice(1)||"home";R=h;const priv=!["home","login","privacy","terms"].includes(h.split("-")[0]);
+if(priv&&!S.auth){location.hash="login";return}if(h=="login"&&S.auth){location.hash="app";return}
+let [r,...rest]=h.split("-"),a=rest.join("-");let html;
+if(r=="group"&&a)html=groupPage(a);else if(r=="plan")html=planPage(a);else if(r=="newplan")html=pages.newplan(a);else html=(pages[h]||pages.home)();
+$("#app").innerHTML=html;modal("")}
+window.addEventListener("hashchange",()=>{T="overview";render();scrollTo(0,0)});
+
+function mForm(f,title,body,btn,cls=""){return`<h3>${title}</h3><form data-f=${f}>${body}<div class=row><button class="btn ${cls}">${btn}</button><button type=button class="btn g" data-a=close>Cancel</button></div></form>`}
+const curP=()=>pl(R.split("-").slice(1).join("-"));
+document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(!el)return;const a=el.dataset.a,id=el.dataset.id,p=R.startsWith("plan-")?curP():null;
+const A={
+close:()=>modal(""),tab:()=>{T=id;render()},
+"m-group":()=>modal(mForm("group","New group",fld("Name","name")+fld("Description","desc","","textarea"),"Create")),
+"m-join":()=>modal(mForm("join","Join a group",fld("Invite code","code",'placeholder="e.g. CRIC2026 (try OLD0000 for expired)"'),"Join")),
+"m-leave":()=>modal(`<h3>Leave group?</h3><p class=mu>You’ll lose access to its plans.</p><div class=row><button class="btn d" data-a=leave data-id=${id}>Leave</button><button class="btn g" data-a=close>Cancel</button></div>`),
+"m-delplan":()=>modal(`<h3>Delete this plan?</h3><p class=mu>This can’t be undone.</p><div class=row><button class="btn d" data-a=delplan>Delete</button><button class="btn g" data-a=close>Cancel</button></div>`),
+"m-delacct":()=>modal(`<h3>Delete account?</h3><p class=mu>Your profile, memberships and data will be removed. This can’t be undone.</p><div class=row><button class="btn d" data-a=delacct>Yes, delete</button><button class="btn g" data-a=close>Cancel</button></div>`),
+"m-poll":()=>modal(mForm("poll","New poll",fld("Question","q")+fld("Options (one per line, min 2)","opts","rows=4","textarea"),"Create")),
+"m-exp":()=>{const g=grp(p.gid);modal(mForm("exp","Add expense",fld("Title","t")+fld("Amount (₹)","amt",'type=number step=0.01 min=0')+`<label>Paid by<select name=paid>${g.members.map(u=>`<option value=${u}>${U[u]}</option>`).join("")}</select></label><label>Split equally between</label>${g.members.map(u=>`<label class=ck><input type=checkbox name=p value=${u} checked>${U[u]}</label>`).join("")}<small class=er data-e=p></small>`,"Save"))},
+copy:()=>{const t=location.origin+location.pathname+"#login?join="+id;(navigator.clipboard?navigator.clipboard.writeText(id).catch(()=>{}):0);toast("Invite code "+id+" copied")},
+google:()=>{S.auth=true;save();location.hash="app"},resend:()=>toast("OTP resent"),back:()=>{L={step:"phone"};render()},
+logout:()=>{S.auth=false;save();location.hash="home"},delacct:()=>{localStorage.removeItem(K);S=seed();location.hash="home";render();toast("Account deleted")},
+read:()=>{S.notifs.find(n=>n.id==id).read=true;save();render()},readall:()=>{S.notifs.forEach(n=>n.read=true);save();render()},
+leave:()=>{S.groups=S.groups.filter(g=>g.id!=id);save();location.hash="groups";toast("You left the group")},
+rmmem:()=>{const g=grp(el.dataset.g);g.members=g.members.filter(u=>u!=id);save();render();toast("Member removed")},
+delplan:()=>{S.plans=S.plans.filter(x=>x.id!=p.id);save();location.hash="app";toast("Plan deleted")},
+vote:()=>{const q=p.polls.find(x=>x.id==id);if(q.closed)return;q.opts.forEach(o=>o.v=o.v.filter(u=>u!="u0"));q.opts[+el.dataset.i].v.push("u0");log("You voted in “"+q.q+"”",p.gid);render()},
+closepoll:()=>{p.polls.find(x=>x.id==id).closed=true;save();render();toast("Poll closed")},
+toggle:()=>{const t=p.todo.find(x=>x.id==id);t.done=el.checked;t.doneBy="u0";log("You "+(t.done?"completed":"reopened")+" “"+t.t+"”",p.gid);render()},
+deltodo:()=>{p.todo=p.todo.filter(x=>x.id!=id);save();render()},delexp:()=>{p.exp=p.exp.filter(x=>x.id!=id);save();render()},
+status:()=>{}};A[a]&&A[a]()});
+document.addEventListener("change",e=>{if(e.target.dataset.a=="status"){const p=curP();p.status=e.target.value;log("Plan “"+p.title+"” is now "+p.status,p.gid);render();toast("Status updated")}});
+function err(f,o){f.querySelectorAll("[data-e]").forEach(x=>x.textContent=o[x.dataset.e]||"");return Object.keys(o).length}
+document.addEventListener("submit",e=>{e.preventDefault();const f=e.target,k=f.dataset.f,fd=new FormData(f),d=Object.fromEntries(fd),p=R.startsWith("plan-")?curP():null;
+const F={
+phone:()=>{if(err(f,/^\d{10}$/.test(d.phone.trim())?{}:{phone:"Enter a valid 10-digit number."}))return;L={step:"otp",phone:d.phone.trim()};S.me.phone="+91 "+L.phone;render()},
+otp:()=>{if(err(f,d.otp.trim()=="123456"?{}:{otp:"Invalid OTP. Please try again."}))return;S.auth=true;save();L={step:"phone"};location.hash="app"},
+profile:()=>{if(err(f,d.name.trim().length<2?{name:"Name is required."}:{}))return;S.me.name=d.name.trim();save();toast("Profile saved");render()},
+group:()=>{if(err(f,d.name.trim().length<3?{name:"At least 3 characters."}:{}))return;const g={id:"g"+uid(),name:d.name.trim(),desc:d.desc.trim(),code:uid().toUpperCase(),members:["u0"],owner:"u0"};S.groups.push(g);log("You created the group “"+g.name+"”",g.id);location.hash="group-"+g.id;toast("Group created · code "+g.code)},
+join:()=>{const c=d.code.trim().toUpperCase(),mine=S.groups.find(g=>g.code==c);let m="";if(!c)m="Enter a code.";else if(c=="OLD0000")m="This invite has expired.";else if(mine)m="You’re already a member of this group.";else if(!S.pool.find(g=>g.code==c))m="Invalid invite code.";if(err(f,m?{code:m}:{}))return;const g=S.pool.find(x=>x.code==c);S.pool=S.pool.filter(x=>x!=g);g.members.push("u0");S.groups.push(g);log("You joined “"+g.name+"”",g.id);location.hash="group-"+g.id;toast("Joined group")},
+plan:()=>{const o={};if(d.title.trim().length<3)o.title="Title needs at least 3 characters.";if(!d.date)o.date="Pick a date.";if(!d.gid)o.gid="Create a group first.";if(err(f,o))return;const x={id:"p"+uid(),gid:d.gid,title:d.title.trim(),cat:d.cat,desc:d.desc.trim(),date:d.date,time:d.time,loc:d.loc.trim(),status:"Planning",by:"u0",polls:[],todo:[],exp:[]};S.plans.push(x);log("You created the plan “"+x.title+"”",x.gid);location.hash="plan-"+x.id;toast("Plan created")},
+poll:()=>{const os=d.opts.split("\n").map(s=>s.trim()).filter(Boolean),o={};if(d.q.trim().length<3)o.q="Enter a question.";if(os.length<2)o.opts="Add at least two options.";if(err(f,o))return;p.polls.push({id:uid(),q:d.q.trim(),closed:false,opts:os.map(t=>({t,v:[]}))});log("You created the poll “"+d.q.trim()+"”",p.gid);render()},
+todo:()=>{if(!d.t.trim())return;p.todo.push({id:uid(),t:d.t.trim(),done:false,as:d.as,by:"u0"});log("You added “"+d.t.trim()+"”",p.gid);render()},
+exp:()=>{const a=Math.round(parseFloat(d.amt)*100),ps=fd.getAll("p"),o={};if(d.t.trim().length<2)o.t="Enter a title.";if(!(a>0))o.amt="Enter a valid amount greater than 0.";if(!ps.length)o.p="Select at least one participant.";if(err(f,o))return;p.exp.push({id:uid(),t:d.t.trim(),amt:a,paid:d.paid,parts:ps});log("You added expense “"+d.t.trim()+"” ("+inr(a)+")",p.gid);render();toast("Expense added")}};
+F[k]&&F[k]()});
+document.addEventListener("keydown",e=>{if(e.key=="Escape")modal("")});
+load();render();
+</script></body></html>
